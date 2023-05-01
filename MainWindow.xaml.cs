@@ -12,7 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-
+using System.Windows.Threading;
 namespace MatchGame
 {
     /// <summary>
@@ -20,11 +20,28 @@ namespace MatchGame
     /// </summary>
     public partial class MainWindow : Window
     {
+        DispatcherTimer timer = new DispatcherTimer();
+        int tenthOfSecondsElaspsed;
+        int matchesFound;
+
         public MainWindow()
         {
             InitializeComponent();
 
+            timer.Interval = TimeSpan.FromSeconds(.1);
+            timer.Tick += Timer_Tick;
             SetUpGame();
+        }
+
+        private void Timer_Tick(object sender, EventArgs e)
+        {
+            tenthOfSecondsElaspsed++;
+            timeTextBlock.Text = (tenthOfSecondsElaspsed / 10F).ToString("0.0s");
+            if (matchesFound == 8)
+            {
+                timer.Stop();
+                timeTextBlock.Text = timeTextBlock.Text + " - Play again?";
+            }
         }
 
         private void SetUpGame()
@@ -50,5 +67,47 @@ namespace MatchGame
                 animalEmoji.RemoveAt(index); //這段程式碼使用 RemoveAt 方法從 animalEmoji 列表中移除索引為 index 的元素，以防止同一個表情符號在未來的選擇中再次出現。
             }
         }
+
+        TextBlock lastTextBlockClicked;
+        bool findingMatch = false;
+
+        private void TextBlock_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            TextBlock textBlock = sender as TextBlock;
+            if (findingMatch == false)
+            {
+                textBlock.Visibility = Visibility.Hidden;
+                lastTextBlockClicked= textBlock;
+                findingMatch = true;
+            }else if (textBlock.Text == lastTextBlockClicked.Text)
+            {
+                textBlock.Visibility= Visibility.Hidden;
+                findingMatch= false;
+            }else
+            {
+                lastTextBlockClicked.Visibility= Visibility.Visible;
+                findingMatch= false;
+            }
+        }
+
+        private void TimeTextBlock_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (matchesFound == 8)
+            {
+                SetUpGame();
+            }
+        }
     }
 }
+
+////這段程式碼定義了一個名為 TextBlock_MouseDown 的事件處理程序，當使用者按下一個 TextBlock 控制項時，就會執行這個事件處理程序。
+
+//在事件處理程序中，首先將 sender 變數轉換為 TextBlock 類型的 textBlock 變數。sender 變數代表引發事件的對象，因此在這裡就是被點擊的 TextBlock 控制項。
+
+//接著，如果目前沒有在尋找匹配（findingMatch 為 false），則將 textBlock 的可見性設為隱藏（Visibility.Hidden），表示這個控制項已經被選擇了。同時，將 lastTextBlockClicked 變數設定為 textBlock，以儲存上一個被選擇的 TextBlock 控制項。最後，將 findingMatch 設定為 true，表示目前正在尋找匹配。
+
+//如果目前正在尋找匹配且被點擊的 TextBlock 控制項的文字與上一個被點擊的 TextBlock 控制項的文字相同，則將該控制項的可見性設定為隱藏，表示這兩個控制項已經匹配成功，找到了一對。同時，將 findingMatch 設定為 false，表示已經找到一對匹配的控制項。
+
+//如果目前正在尋找匹配但是被點擊的 TextBlock 控制項的文字與上一個被點擊的 TextBlock 控制項的文字不同，則將上一個被點擊的 TextBlock 控制項的可見性設定為可見（Visibility.Visible），表示上一個被選擇的 TextBlock 控制項需要重新顯示。同時，將 findingMatch 設定為 false，表示目前沒有找到匹配的控制項。
+
+//總的來說，這段程式碼的作用是在一個文字匹配遊戲中處理 TextBlock 控制項的點擊事件，當兩個 TextBlock 控制項的文字相同時，將它們從畫面中隱藏，否則重新顯示上一個被選擇的 TextBlock 控制項。
